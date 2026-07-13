@@ -18,6 +18,7 @@
   --danger:#ba1a1a; --warn:#946200;
   --shadow:0 4px 20px rgba(0,0,0,.05);
   --shadow-lift:0 6px 24px rgba(4,69,50,.10);
+  --item-name-width:320px;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -91,12 +92,28 @@ tbody tr:last-child td{border-bottom:0}
 tbody tr:hover td{background:var(--mint-wash)}
 td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:500}
 th.chk,td.chk{width:36px;text-align:center;padding-left:12px;padding-right:4px}
+.item-name-col,.item-name-cell{min-width:var(--item-name-width);width:var(--item-name-width)}
+.item-name-col{position:relative;padding-right:26px}
+.col-resize{position:absolute;top:0;right:0;width:14px;height:100%;cursor:col-resize;touch-action:none}
+.col-resize::after{content:"";position:absolute;top:9px;bottom:9px;left:6px;border-left:2px solid #b8c4d8;border-radius:2px}
+.col-resize:hover::after,.col-resize.dragging::after{border-color:var(--primary)}
 td.final,th.final{background:var(--col-hi)}
 td.final{font-weight:700;color:var(--primary-ink)}
 .srcbadge{display:inline-block;background:var(--head-band);color:#3c475a;border:1px solid #dbe4f5;
   border-radius:6px;padding:2px 9px;font-size:11.5px;font-weight:600;white-space:nowrap;max-width:190px;overflow:hidden;text-overflow:ellipsis}
 .srcbadge.mint{background:var(--mint-soft);color:var(--primary-ink);border-color:#cdebdc}
 .src{font-size:12px;color:var(--muted)}
+.source-adder{margin-top:16px}
+.source-adder .row{align-items:stretch}
+.source-adder input{font-size:13px;width:100%}
+.source-hint{font-size:12px;color:var(--muted);line-height:1.45;margin-top:7px}
+.custom-source-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.custom-source-chip{display:inline-flex;align-items:center;gap:8px;max-width:100%;background:var(--mint-soft);color:var(--primary-ink);
+  border:1px solid #cdebdc;border-radius:999px;padding:5px 8px 5px 11px;font-size:12px;font-weight:600}
+.custom-source-chip span{display:inline-block;max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.custom-source-chip button{border:0;background:rgba(6,95,70,.10);color:var(--primary-ink);border-radius:999px;width:21px;height:21px;
+  cursor:pointer;font:700 14px/1 "Inter",sans-serif}
+.custom-source-chip button:hover{background:#ffdede;color:var(--danger)}
 a{color:var(--primary-ink)}
 .badge{display:inline-block;background:var(--mint-soft);color:var(--primary-ink);border-radius:999px;padding:1px 9px;font-size:11.5px;font-weight:700}
 .muted{color:var(--muted)}
@@ -115,6 +132,7 @@ select.libpick{max-width:340px}
 .toast.show{opacity:1}
 .toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .toolbar .left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.toolbar .actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
 .resultmeta{font-family:"Hanken Grotesk","Sarabun",sans-serif;font-weight:600;font-size:16px}
 .resultmeta .sub{display:block;font-family:"Inter","Sarabun",sans-serif;font-weight:400;font-size:12.5px;color:var(--muted);margin-top:2px}
 
@@ -176,9 +194,15 @@ select.libpick{max-width:340px}
           <input type="text" id="q" placeholder="เช่น Smoke detector, สายไฟ THW, ท่อ EMT, กล้อง CCTV …"
                  onkeydown="if(event.key==='Enter')doSearch()">
         </div>
-        <div style="margin-top:16px">
-          <label class="fieldlabel">Custom Source URL (Optional)</label>
-          <input type="text" id="customUrl" placeholder="https://www.somestore.com — คั่นหลายอันด้วย |" style="width:100%;font-size:13px">
+        <div class="source-adder">
+          <label class="fieldlabel">Add Website Source</label>
+          <div class="row">
+            <input type="text" id="customUrl" placeholder="https://www.somestore.com"
+                   onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomSource()}">
+            <button class="btn outline" type="button" onclick="addCustomSource()">Add Website</button>
+          </div>
+          <div class="source-hint">เพิ่มเว็บร้านค้านอกเหนือจาก 4 เว็บหลัก ระบบจะลองค้นด้วย WooCommerce API หรือหน้า search ทั่วไปของเว็บนั้น</div>
+          <div class="custom-source-list" id="customSourceList"></div>
         </div>
         <div style="margin-top:16px;max-width:220px">
           <label class="fieldlabel">Global Markup (%)</label>
@@ -204,13 +228,17 @@ select.libpick{max-width:340px}
   <div class="card">
     <div class="toolbar">
       <div class="left"><div id="searchStatus" class="muted">Search Results — ยังไม่ได้ค้นหา</div></div>
-      <button class="btn" id="saveSelBtn" style="display:none" onclick="saveSelected()">Save Selected → Library</button>
+      <div class="actions" id="saveActions" style="display:none">
+        <button class="btn" onclick="saveAll()">Save All</button>
+        <button class="btn outline" onclick="saveSelected()">Save Selected</button>
+        <button class="btn ghost" onclick="unsaveAll()">Unsave All</button>
+      </div>
     </div>
     <div class="tablewrap" id="resultWrap" style="display:none">
     <table id="resultTbl">
       <thead><tr>
         <th class="chk"><input type="checkbox" id="chkAll" onchange="toggleAll(this)"></th>
-        <th>Item Name</th><th class="num">Base Price (THB)</th><th>Unit</th>
+        <th class="item-name-col">Item Name<span class="col-resize" title="Drag to resize Item Name"></span></th><th class="num">Base Price (THB)</th><th>Unit</th>
         <th class="num">Labor</th><th>Source</th><th>Retrieved</th>
         <th class="num">Markup %</th><th class="num final">Final Price</th><th></th>
       </tr></thead>
@@ -235,7 +263,7 @@ select.libpick{max-width:340px}
     <div class="tablewrap">
     <table>
       <thead><tr>
-        <th>#</th><th>Item Name</th><th class="num">Base Price</th><th class="num">Markup %</th>
+        <th>#</th><th class="item-name-col">Item Name<span class="col-resize" title="Drag to resize Item Name"></span></th><th class="num">Base Price</th><th class="num">Markup %</th>
         <th class="num final">Final Ref Price</th><th>Unit</th><th class="num">Qty</th>
         <th class="num final">Total (THB)</th><th class="num">Labor</th>
         <th>Source</th><th>Saved</th><th></th>
@@ -292,10 +320,96 @@ let lib = [];
 let boqItems = [];
 let boqFileName = '';
 let lastResults = [];
+let customSources = JSON.parse(localStorage.getItem('boq_custom_sources') || '[]');
 
 const fmt = n => n==null || n==='' ? '—' : Number(n).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
 const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
+function setupItemNameResize(){
+  document.querySelectorAll('.col-resize').forEach(handle=>{
+    if(handle.dataset.bound) return;
+    handle.dataset.bound = '1';
+    const start = clientX => {
+      const th = handle.closest('th');
+      const startWidth = th.getBoundingClientRect().width;
+      const startX = clientX;
+      const move = e => {
+        const x = e.touches ? e.touches[0].clientX : e.clientX;
+        const next = Math.max(180, Math.min(760, startWidth + x - startX));
+        document.documentElement.style.setProperty('--item-name-width', Math.round(next)+'px');
+      };
+      const stop = () => {
+        handle.classList.remove('dragging');
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', stop);
+        document.removeEventListener('touchmove', move);
+        document.removeEventListener('touchend', stop);
+      };
+      handle.classList.add('dragging');
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', stop);
+      document.addEventListener('touchmove', move, {passive:false});
+      document.addEventListener('touchend', stop);
+    };
+    handle.addEventListener('mousedown', e=>{ e.preventDefault(); start(e.clientX); });
+    handle.addEventListener('touchstart', e=>{ e.preventDefault(); start(e.touches[0].clientX); }, {passive:false});
+  });
+}
+function sameLibraryItem(a, b){
+  return !!a && !!b && a.name === b.name && (a.source||'') === (b.source||'') &&
+    (a.url||'') === (b.url||'') && Number(a.price) === Number(b.price);
+}
+function findSavedItem(it){ return lib.find(x=>sameLibraryItem(x, it)); }
+function setSaveButtonState(btn, saved){
+  btn.dataset.libId = saved ? saved.id : '';
+  btn.textContent = saved ? 'Unsave' : 'Save';
+  btn.classList.toggle('outline', !saved);
+  btn.classList.toggle('ghost', !!saved);
+  btn.disabled = false;
+}
+function syncRenderedSaveButtons(){
+  document.querySelectorAll('#resultBody button[data-save-action]').forEach(btn=>{
+    const it = lastResults[+btn.dataset.i];
+    setSaveButtonState(btn, findSavedItem(it));
+  });
+}
+function normalizeSourceUrl(url){
+  const raw = (url || '').trim();
+  if(!raw) return '';
+  return /^https?:\/\//i.test(raw) ? raw : 'https://' + raw;
+}
+function saveCustomSources(){
+  localStorage.setItem('boq_custom_sources', JSON.stringify(customSources));
+}
+function renderCustomSources(){
+  const list = document.getElementById('customSourceList');
+  if(!list) return;
+  if(!customSources.length){
+    list.innerHTML = '<span class="source-hint">ยังไม่ได้เพิ่มเว็บเอง</span>';
+    return;
+  }
+  list.innerHTML = customSources.map((url, i)=>
+    '<span class="custom-source-chip"><span>'+esc(url)+'</span><button type="button" title="Remove website" onclick="removeCustomSource('+i+')">×</button></span>'
+  ).join('');
+}
+function addCustomSource(){
+  const inp = document.getElementById('customUrl');
+  const url = normalizeSourceUrl(inp.value);
+  if(!url){ toast('กรอก URL เว็บที่ต้องการเพิ่มก่อน'); return; }
+  try{ new URL(url); }
+  catch(e){ toast('URL ไม่ถูกต้อง เช่น https://www.example.com'); return; }
+  if(customSources.includes(url)){ toast('เว็บนี้อยู่ในรายการแล้ว'); inp.value = ''; return; }
+  customSources.push(url);
+  inp.value = '';
+  saveCustomSources();
+  renderCustomSources();
+  toast('เพิ่มเว็บแล้ว: '+url);
+}
+function removeCustomSource(i){
+  customSources.splice(i, 1);
+  saveCustomSources();
+  renderCustomSources();
+}
 function toast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
@@ -315,7 +429,8 @@ async function doSearch(){
   const q = document.getElementById('q').value.trim();
   if(!q) return;
   const srcs = [...document.querySelectorAll('.src:checked')].map(c=>c.value).join(',');
-  const custom = document.getElementById('customUrl').value.trim();
+  if(document.getElementById('customUrl').value.trim()) addCustomSource();
+  const custom = customSources.join('|');
   const st = document.getElementById('searchStatus');
   st.innerHTML = '<span class="spin"></span> กำลังค้นหา “'+esc(q)+'” จากทุกแหล่ง…';
   document.getElementById('searchBtn').disabled = true;
@@ -339,13 +454,14 @@ function renderResults(d, q){
   if(d.errors.length) msg += ' <span style="color:var(--warn);font-size:12px">(บางแหล่งดึงไม่สำเร็จ: '+esc(d.errors.join('; '))+')</span>';
   st.innerHTML = msg;
   wrap.style.display = d.results.length? '' : 'none';
-  document.getElementById('saveSelBtn').style.display = d.results.length? '' : 'none';
+  document.getElementById('saveActions').style.display = d.results.length? '' : 'none';
   d.results.forEach((it,i)=>{
     const tr = document.createElement('tr');
     const after = it.price!=null ? it.price*(1+mk/100) : null;
+    const saved = findSavedItem(it);
     tr.innerHTML =
       '<td class="chk"><input type="checkbox" class="cand-chk" data-i="'+i+'"></td>'+
-      '<td>'+esc(it.name)+'</td>'+
+      '<td class="item-name-cell">'+esc(it.name)+'</td>'+
       '<td class="num pill-price">'+fmt(it.price)+'</td>'+
       '<td>'+esc(it.unit||'—')+'</td>'+
       '<td class="num">'+fmt(it.labor)+'</td>'+
@@ -354,7 +470,7 @@ function renderResults(d, q){
       '<td class="num"><input type="number" value="'+mk+'" min="0" step="0.5" style="width:70px" '+
         'oninput="updAfter(this,'+(it.price==null?'null':it.price)+','+i+')"></td>'+
       '<td class="num final" id="after-'+i+'">'+fmt(after)+'</td>'+
-      '<td><button class="btn small outline" onclick="saveToLib('+i+', this)">Save</button></td>';
+      '<td><button class="btn small '+(saved?'ghost':'outline')+'" data-save-action data-i="'+i+'" data-lib-id="'+(saved?saved.id:'')+'" onclick="toggleSave('+i+', this)">'+(saved?'Unsave':'Save')+'</button></td>';
     body.appendChild(tr);
   });
 }
@@ -377,10 +493,22 @@ async function saveToLib(i, btn){
     final_price: it.price!=null ? +(it.price*(1+mk/100)).toFixed(2) : null,
   };
   const r = await fetch('/api/library', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(rec)});
-  await r.json();
+  const saved = await r.json();
   await refreshLib();
-  btn.textContent = '✓ Saved'; btn.disabled = true;
-  return it;
+  setSaveButtonState(btn, saved);
+  return saved;
+}
+async function unsaveFromLib(id, btn){
+  if(!id) return;
+  await fetch('/api/library?id='+id, {method:'DELETE'});
+  await refreshLib();
+  if(btn) setSaveButtonState(btn, null);
+  if(document.getElementById('pane-library').style.display !== 'none') renderLib();
+}
+async function toggleSave(i, btn){
+  const id = +btn.dataset.libId;
+  if(id) await unsaveFromLib(id, btn);
+  else await saveToLib(i, btn);
 }
 async function saveSelected(){
   const chks = [...document.querySelectorAll('.cand-chk:checked')];
@@ -388,12 +516,31 @@ async function saveSelected(){
   let n = 0;
   for(const c of chks){
     const i = +c.dataset.i;
-    const btn = c.closest('tr').querySelector('button');
-    if(btn.disabled) continue;
+    const btn = c.closest('tr').querySelector('button[data-save-action]');
+    if(btn.dataset.libId) continue;
     await saveToLib(i, btn);
     n++;
   }
   toast('บันทึกเข้า Price Library แล้ว '+n+' รายการ');
+}
+async function saveAll(){
+  const buttons = [...document.querySelectorAll('#resultBody button[data-save-action]')];
+  let n = 0;
+  for(const btn of buttons){
+    if(btn.dataset.libId) continue;
+    await saveToLib(+btn.dataset.i, btn);
+    n++;
+  }
+  toast('Save all แล้ว '+n+' รายการ');
+}
+async function unsaveAll(){
+  const buttons = [...document.querySelectorAll('#resultBody button[data-save-action]')].filter(btn=>btn.dataset.libId);
+  let n = 0;
+  for(const btn of buttons){
+    await unsaveFromLib(+btn.dataset.libId, btn);
+    n++;
+  }
+  toast('Unsave all แล้ว '+n+' รายการ');
 }
 
 /* ---------------- library ---------------- */
@@ -401,6 +548,7 @@ async function refreshLib(){
   lib = await (await fetch('/api/library')).json();
   document.getElementById('libcount').textContent = lib.length;
   document.getElementById('libTotalCount').textContent = lib.length;
+  syncRenderedSaveButtons();
 }
 const libTotal = it => it.final_price!=null ? +(it.final_price*(it.qty??1)).toFixed(2) : null;
 function renderLib(){
@@ -415,7 +563,7 @@ function renderLib(){
     grand += libTotal(it)||0;
     const tr = document.createElement('tr');
     tr.innerHTML =
-      '<td class="src">'+(n+1)+'</td><td>'+esc(it.name)+'</td>'+
+      '<td class="src">'+(n+1)+'</td><td class="item-name-cell">'+esc(it.name)+'</td>'+
       '<td class="num">'+fmt(it.price)+'</td>'+
       '<td class="num"><input type="number" value="'+(it.markup_pct??0)+'" style="width:65px" min="0" step="0.5" '+
         'onchange="updLib('+it.id+', this.value)"></td>'+
@@ -427,7 +575,7 @@ function renderLib(){
       '<td class="num">'+fmt(it.labor)+'</td>'+
       '<td><span class="srcbadge mint">'+esc(it.source)+'</span>'+(it.url?'<br><a class="src" href="'+esc(it.url)+'" target="_blank">↗</a>':'')+'</td>'+
       '<td class="src">'+esc(it.fetched_at||'')+'</td>'+
-      '<td><button class="btn small ghost" onclick="delLib('+it.id+')">ลบ</button></td>';
+      '<td><button class="btn small ghost" onclick="delLib('+it.id+')">delete</button></td>';
     body.appendChild(tr);
   });
   const trf = document.createElement('tr');
@@ -562,6 +710,8 @@ async function fillBoq(){
   } else toast('ผิดพลาด');
 }
 
+setupItemNameResize();
+renderCustomSources();
 refreshLib();
 </script>
 </body>
