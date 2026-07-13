@@ -93,6 +93,13 @@ td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-n
 th.chk,td.chk{width:36px;text-align:center;padding-left:12px;padding-right:4px}
 .item-name-col,.item-name-cell{min-width:var(--item-name-width);width:var(--item-name-width)}
 .item-name-col{position:relative;padding-right:26px}
+.item-name-cell{max-width:var(--item-name-width)}
+.item-name-wrap{display:flex;align-items:flex-start;gap:8px}
+.item-name-text{flex:1;min-width:0;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;line-height:1.45;word-break:break-word}
+.item-name-cell.expanded .item-name-text{-webkit-line-clamp:unset;overflow:visible}
+.item-name-toggle{flex:0 0 auto;margin-top:-1px;border:1px solid var(--line);background:#fff;color:var(--primary-ink);
+  border-radius:999px;padding:2px 8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer}
+.item-name-toggle:hover{border-color:var(--primary);background:var(--mint-wash)}
 .col-resize{position:absolute;top:0;right:0;width:14px;height:100%;cursor:col-resize;touch-action:none}
 .col-resize::after{content:"";position:absolute;top:9px;bottom:9px;left:6px;border-left:2px solid #b8c4d8;border-radius:2px}
 .col-resize:hover::after,.col-resize.dragging::after{border-color:var(--primary)}
@@ -132,6 +139,16 @@ select.libpick{max-width:340px}
 .toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .toolbar .left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .toolbar .actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.source-status-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:0 0 14px}
+.source-status-card{border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:#fff}
+.source-status-card .name{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+.source-status-card .state{margin-top:4px;font-size:13px;font-weight:700}
+.source-status-card .msg{margin-top:3px;font-size:11.5px;color:var(--muted);line-height:1.35}
+.source-status-card.success{background:var(--mint-wash);border-color:#cdebdc}
+.source-status-card.success .state{color:var(--primary-ink)}
+.source-status-card.no_result .state{color:var(--warn)}
+.source-status-card.error{border-color:#f0c7c7;background:#fff8f8}
+.source-status-card.error .state{color:var(--danger)}
 .resultmeta{font-family:"Hanken Grotesk","Sarabun",sans-serif;font-weight:600;font-size:16px}
 .resultmeta .sub{display:block;font-family:"Inter","Sarabun",sans-serif;font-weight:400;font-size:12.5px;color:var(--muted);margin-top:2px}
 
@@ -242,6 +259,7 @@ select.libpick{max-width:340px}
         <button class="btn ghost" onclick="unsaveAll()">Unsave All</button>
       </div>
     </div>
+    <div class="source-status-panel" id="sourceStatusPanel" style="display:none"></div>
     <div class="tablewrap" id="resultWrap" style="display:none">
     <table id="resultTbl">
       <thead><tr>
@@ -551,6 +569,9 @@ let boqFiles = null;      // unzipped xlsx entries
 let boqSheetTarget = '';
 let boqFileName = '';
 let customSources = JSON.parse(store.getItem('boq_custom_sources') || '[]');
+let lastSearchMode = 'offline';
+let lastSearchErrors = [];
+let lastSourceStatus = null;
 
 const fmt = n => n==null || n==='' ? '—' : Number(n).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
 const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -607,6 +628,42 @@ function syncRenderedSaveButtons(){
     const it = candidates[+btn.dataset.i];
     setSaveButtonState(btn, findSavedItem(it));
   });
+}
+function itemNameCell(name){
+  return '<td class="item-name-cell" title="'+esc(name)+'"><div class="item-name-wrap">'+
+    '<span class="item-name-text">'+esc(name)+'</span>'+
+    '<button class="item-name-toggle" type="button" onclick="toggleItemName(this)">more</button>'+
+    '</div></td>';
+}
+function toggleItemName(btn){
+  const cell = btn.closest('.item-name-cell');
+  const expanded = cell.classList.toggle('expanded');
+  btn.textContent = expanded ? 'less' : 'more';
+}
+function renderSourceStatus(sourceStatus){
+  const panel = document.getElementById('sourceStatusPanel');
+  if(!panel) return;
+  if(!sourceStatus){
+    panel.style.display = 'none';
+    panel.innerHTML = '';
+    return;
+  }
+  const labels = {
+    sirichai: 'sirichaielectric.com',
+    ranfaifa: 'ranfaifa.com',
+    obec: 'YOTATHAI / OBEC',
+    apelectric: 'apelectricstore.com',
+    custom: 'Custom URL'
+  };
+  panel.innerHTML = Object.keys(labels).map(key=>{
+    const s = sourceStatus[key] || {status:'no_result', result_count:0, message:''};
+    return '<div class="source-status-card '+esc(s.status)+'">'+
+      '<div class="name">'+esc(labels[key])+'</div>'+
+      '<div class="state">'+esc(s.status)+' · '+(s.result_count||0)+' items</div>'+
+      (s.message?'<div class="msg">'+esc(s.message)+'</div>':'')+
+      '</div>';
+  }).join('');
+  panel.style.display = '';
 }
 function normalizeSourceUrl(url){
   const raw = (url || '').trim();
@@ -693,12 +750,39 @@ function searchObec(q){
   }
   return out;
 }
-function doSearch(){
+function canUseLiveBackend(){
+  return location.protocol === 'http:' || location.protocol === 'https:';
+}
+async function doSearch(){
   const q = document.getElementById('q').value.trim();
   if(!q) return;
   if(document.getElementById('customUrl').value.trim()) addCustomSource();
-  candidates = searchObec(q);
   renderShopBtns(q);
+  if(canUseLiveBackend()){
+    const st = document.getElementById('searchStatus');
+    st.innerHTML = '<span class="spin"></span> กำลังดึงเว็บสดผ่าน Python/Flask สำหรับ “'+esc(q)+'”…';
+    try{
+      const sources = 'sirichai,ranfaifa,obec,apelectric';
+      const custom = customSources.join('|');
+      const r = await fetch('/api/search?q='+encodeURIComponent(q)+'&sources='+sources+'&custom='+encodeURIComponent(custom));
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const d = await r.json();
+      candidates = d.results || [];
+      lastSearchMode = 'live';
+      lastSearchErrors = d.errors || [];
+      lastSourceStatus = d.source_status || null;
+      renderResults(q);
+      return;
+    }catch(e){
+      lastSearchMode = 'offline';
+      lastSearchErrors = ['Live backend unavailable: '+e];
+      lastSourceStatus = null;
+      toast('ใช้ live backend ไม่ได้ กำลังค้นจากข้อมูลฝังในไฟล์แทน');
+    }
+  }
+  candidates = searchObec(q);
+  lastSearchMode = 'offline';
+  lastSourceStatus = null;
   renderResults(q);
 }
 function renderShopBtns(q){
@@ -727,8 +811,14 @@ function renderResults(q){
   const body = document.getElementById('resultBody');
   const mk = parseFloat(document.getElementById('markupDefault').value)||0;
   body.innerHTML = '';
-  st.innerHTML = 'Candidate List: '+candidates.length+' รายการ'+(q?' สำหรับ “'+esc(q)+'”':'')+
-    ' <span class="src">(จากราคากลาง สพฐ. + ที่กรอกเอง — เรียงราคาต่ำ→สูง)</span>';
+  const modeText = lastSearchMode === 'live'
+    ? 'จาก Python/Flask live search + ราคากลาง สพฐ. — เรียงราคาต่ำ→สูง'
+    : 'จากราคากลาง สพฐ. + ที่กรอกเอง — เรียงราคาต่ำ→สูง';
+  let msg = 'Candidate List: '+candidates.length+' รายการ'+(q?' สำหรับ “'+esc(q)+'”':'')+
+    ' <span class="src">('+modeText+')</span>';
+  if(lastSearchErrors.length) msg += ' <span style="color:var(--warn);font-size:12px">(บางแหล่งดึงไม่สำเร็จ: '+esc(lastSearchErrors.join('; '))+')</span>';
+  st.innerHTML = msg;
+  renderSourceStatus(lastSourceStatus);
   candidates.sort((a,b)=>(a.price==null)-(b.price==null) || (a.price||0)-(b.price||0));
   tbl.style.display = candidates.length?'':'none';
   document.getElementById('saveActions').style.display = candidates.length?'':'none';
@@ -739,7 +829,7 @@ function renderResults(q){
     const tr = document.createElement('tr');
     tr.innerHTML =
       '<td class="chk"><input type="checkbox" class="cand-chk" data-i="'+i+'"></td>'+
-      '<td class="item-name-cell">'+esc(it.name)+'</td>'+
+      itemNameCell(it.name)+
       '<td class="num pill-price">'+fmt(it.price)+'</td>'+
       '<td>'+esc(it.unit||'—')+'</td>'+
       '<td class="num">'+fmt(it.labor)+'</td>'+
@@ -829,7 +919,7 @@ function renderLib(){
     grand += libTotal(it)||0;
     const tr = document.createElement('tr');
     tr.innerHTML =
-      '<td>'+(n+1)+'</td><td class="item-name-cell">'+esc(it.name)+'</td>'+
+      '<td>'+(n+1)+'</td>'+itemNameCell(it.name)+
       '<td class="num">'+fmt(it.price)+'</td>'+
       '<td class="num"><input type="number" value="'+(it.markup_pct??0)+'" style="width:65px" min="0" step="0.5" '+
         'onchange="updLib('+it.id+', this.value)"></td>'+
