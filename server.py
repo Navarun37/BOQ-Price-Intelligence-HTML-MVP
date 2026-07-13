@@ -897,6 +897,8 @@ def single_file_app_html():
 
 if __name__ == '__main__':
     # HOST=0.0.0.0 python3 server.py  -> เปิดให้เครื่องอื่นใน Wi-Fi วงเดียวกันเข้าได้
-    host = os.environ.get('HOST', '127.0.0.1')
-    print('BOQ Price Finder -> http://%s:5544' % ('127.0.0.1' if host == '127.0.0.1' else host))
-    app.run(host=host, port=5544, debug=False)
+    host = os.environ.get('HOST', '0.0.0.0')
+    port = int(os.environ.get('PORT', 5544))
+    display_host = '127.0.0.1' if host in ('0.0.0.0', '127.0.0.1') else host
+    print('BOQ Price Finder -> http://%s:%s' % (display_host, port))
+    app.run(host=host, port=port, debug=False)
