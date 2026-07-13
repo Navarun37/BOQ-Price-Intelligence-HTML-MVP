@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Price Library - BOQ Price Intelligence</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container": "#e5eeff",
+                        "primary-container": "#065f46",
+                        "on-primary": "#ffffff",
+                        "primary-fixed-dim": "#8bd6b6",
+                        "on-tertiary-fixed": "#131e19",
+                        "secondary-container": "#d5e0f8",
+                        "on-background": "#0b1c30",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "outline": "#6f7973",
+                        "tertiary-fixed": "#d9e6dd",
+                        "tertiary-fixed-dim": "#bdcac1",
+                        "primary": "#004532",
+                        "on-primary-fixed-variant": "#00513b",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "error": "#ba1a1a",
+                        "secondary": "#545f73",
+                        "on-secondary-container": "#586377",
+                        "on-error-container": "#93000a",
+                        "surface-container-highest": "#d3e4fe",
+                        "on-secondary-fixed": "#111c2d",
+                        "surface-tint": "#1b6b51",
+                        "background": "#f8f9ff",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#dce9ff",
+                        "outline-variant": "#bec9c2",
+                        "on-primary-fixed": "#002116",
+                        "on-tertiary-container": "#becac2",
+                        "primary-fixed": "#a6f2d1",
+                        "surface-dim": "#cbdbf5",
+                        "tertiary": "#333f39",
+                        "surface-bright": "#f8f9ff",
+                        "tertiary-container": "#4a564f",
+                        "inverse-primary": "#8bd6b6",
+                        "on-surface": "#0b1c30",
+                        "on-primary-container": "#8bd6b7",
+                        "secondary-fixed": "#d8e3fb",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-error": "#ffffff",
+                        "surface-container-low": "#eff4ff",
+                        "inverse-surface": "#213145",
+                        "on-surface-variant": "#3f4944",
+                        "surface": "#f8f9ff",
+                        "surface-variant": "#d3e4fe",
+                        "on-tertiary-fixed-variant": "#3e4943",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "on-secondary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-padding": "32px",
+                        "section-gap": "48px",
+                        "base": "8px",
+                        "gutter": "24px",
+                        "table-row-height": "56px"
+                    },
+                    "fontFamily": {
+                        "data-tabular": ["Inter", "sans-serif"],
+                        "body-sm": ["Inter", "sans-serif"],
+                        "body-md": ["Inter", "sans-serif"],
+                        "display-lg": ["Hanken Grotesk", "sans-serif"],
+                        "title-lg": ["Inter", "sans-serif"],
+                        "headline-sm": ["Hanken Grotesk", "sans-serif"],
+                        "headline-md": ["Hanken Grotesk", "sans-serif"],
+                        "label-md": ["Inter", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "data-tabular": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "title-lg": ["18px", { "lineHeight": "26px", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-headline-sm, .font-headline-md, .font-display-lg { font-family: 'Hanken Grotesk', sans-serif; }
+        
+        .table-row-hover:hover {
+            background-color: #eaf1ff; /* inverse-on-surface */
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border-bottom-color: transparent;
+        }
+        
+        .table-row-transition {
+            transition: all 0.2s ease-in-out;
+        }
+
+        /* Ambient subtle blur for the search bar */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface flex min-h-screen selection:bg-primary-container selection:text-on-primary">
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-0 h-screen w-64 bg-primary-container border-r border-outline-variant flex flex-col py-stack-md z-50">
+<div class="px-6 pb-8">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface flex items-center justify-center text-primary-container shadow-sm">
+<span class="material-symbols-outlined font-bold text-[24px]">architecture</span>
+</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm font-bold text-on-primary tracking-tight">BOQ Intelligence</h1>
+<p class="font-label-md text-label-md text-on-primary-container opacity-80 uppercase tracking-widest mt-0.5">Elite Procurement MVP</p>
+</div>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto overflow-x-hidden w-full flex flex-col gap-1 px-4">
+<!-- Nav Items from JSON -->
+<a class="flex items-center gap-3 text-on-primary-container/70 hover:text-on-primary hover:bg-primary/50 px-4 py-3 rounded-lg transition-colors duration-200 group active:scale-95" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">dashboard</span>
+<span class="font-body-md text-body-md font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 text-on-primary-container/70 hover:text-on-primary hover:bg-primary/50 px-4 py-3 rounded-lg transition-colors duration-200 group active:scale-95" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">search</span>
+<span class="font-body-md text-body-md font-medium">Price Search</span>
+</a>
+<a class="flex items-center gap-3 text-on-primary-container/70 hover:text-on-primary hover:bg-primary/50 px-4 py-3 rounded-lg transition-colors duration-200 group active:scale-95" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">group</span>
+<span class="font-body-md text-body-md font-medium">Candidate List</span>
+</a>
+<!-- Active State Navigation -->
+<a class="flex items-center gap-3 bg-secondary-container/20 text-on-primary border-l-4 border-on-primary-container px-4 py-3 rounded-r-lg group" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">library_books</span>
+<span class="font-body-md text-body-md font-semibold">Price Library</span>
+</a>
+<a class="flex items-center gap-3 text-on-primary-container/70 hover:text-on-primary hover:bg-primary/50 px-4 py-3 rounded-lg transition-colors duration-200 group active:scale-95" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">edit_note</span>
+<span class="font-body-md text-body-md font-medium">Fill BOQ</span>
+</a>
+<a class="flex items-center gap-3 text-on-primary-container/70 hover:text-on-primary hover:bg-primary/50 px-4 py-3 rounded-lg transition-colors duration-200 group active:scale-95" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">ios_share</span>
+<span class="font-body-md text-body-md font-medium">Export Center</span>
+</a>
+<a class="flex items-center gap-3 text-on-primary-container/70 hover:text-on-primary hover:bg-primary/50 px-4 py-3 rounded-lg transition-colors duration-200 group active:scale-95" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">database</span>
+<span class="font-body-md text-body-md font-medium">Source Management</span>
+</a>
+<a class="flex items-center gap-3 text-on-primary-container/70 hover:text-on-primary hover:bg-primary/50 px-4 py-3 rounded-lg transition-colors duration-200 group active:scale-95" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">history</span>
+<span class="font-body-md text-body-md font-medium">Activity Log</span>
+</a>
+<div class="mt-auto">
+<a class="flex items-center gap-3 text-on-primary-container/70 hover:text-on-primary hover:bg-primary/50 px-4 py-3 rounded-lg transition-colors duration-200 group active:scale-95" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">settings</span>
+<span class="font-body-md text-body-md font-medium">Settings</span>
+</a>
+</div>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<main class="ml-64 flex-1 flex flex-col min-h-screen">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center h-16 px-gutter w-full sticky top-0 z-40 bg-surface/80 backdrop-blur-md border-b border-outline-variant shadow-sm transition-all focus-within:ring-2 focus-within:ring-secondary-container">
+<div class="flex items-center gap-4">
+<span class="font-headline-md text-headline-md font-black text-primary tracking-tight">BOQ Price Intelligence</span>
+<!-- Search on left -->
+<div class="relative ml-8 group hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors text-[20px]">search</span>
+<input class="w-80 bg-surface-container-lowest border border-outline-variant rounded-full py-1.5 pl-10 pr-4 font-body-sm text-body-sm text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm" placeholder="Search across platforms..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<!-- Trailing Secondary Action -->
+<div class="flex items-center gap-2 px-3 py-1 bg-surface-container rounded-full border border-outline-variant/30 hidden lg:flex">
+<div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">System Healthy</span>
+</div>
+<!-- Trailing Icon Actions -->
+<div class="flex items-center gap-2">
+<button aria-label="Notifications" class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-secondary hover:bg-surface-container transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border-2 border-surface"></span>
+</button>
+<button aria-label="Sync" class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-secondary hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined">sync</span>
+</button>
+</div>
+<div class="w-px h-8 bg-outline-variant/50"></div>
+<button class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+<div class="w-8 h-8 rounded-full bg-secondary-container overflow-hidden border border-outline-variant/30 flex items-center justify-center">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="A professional headshot of a corporate procurement officer in a modern office, softly lit with cool, white lighting. The background is a slightly blurred, high-end corporate setting with subtle green accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoJkz4rW1nXOF89s1mB5_nlk0On3j8zjunlXB2DI_q0tBx8alrmYP7ehe9Sa-eB-vrIu2avPE_1sZQZnrIGkRgVnbDhSsfOG3imLIJ2lB2SbqYgDhhN2QQ71AFU2YSyWmbK9qCtYiSlrRqgUVsSDtW2ow6FD_5W8PgNiWMN7O4BsVrLxOE4kgzwM36bIhxlCgoJ3ZHq5tlO_J_dltrP74TQ9DInlbJ9kF_b6xmOAnxR3CItiSbiptVVw7y2Zw-jMivLL-hGl-s2xc"/>
+</div>
+</button>
+</div>
+</header>
+<!-- Page Content Canvas -->
+<div class="flex-1 p-gutter max-w-[1440px] w-full mx-auto flex flex-col gap-section-gap">
+<!-- Page Header & Global Actions -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div class="flex flex-col gap-2 max-w-2xl">
+<div class="flex items-center gap-3 mb-1">
+<span class="material-symbols-outlined text-primary text-[28px]">library_books</span>
+<h2 class="font-display-lg text-display-lg text-on-surface tracking-tight">Price Library</h2>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                        Centralized repository of verified market rates, historical pricing data, and standard labor costs. Manage and sync your reference points.
+                    </p>
+</div>
+<div class="flex flex-wrap items-center gap-3">
+<button class="h-10 px-4 rounded-lg bg-surface border border-outline-variant text-on-surface hover:bg-surface-container hover:border-outline transition-all flex items-center gap-2 font-label-md text-label-md shadow-sm">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+                        Delete Selected
+                    </button>
+<button class="h-10 px-4 rounded-lg bg-surface border border-outline-variant text-on-surface hover:bg-surface-container hover:border-outline transition-all flex items-center gap-2 font-label-md text-label-md shadow-sm">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                        Download Excel
+                    </button>
+<button class="h-10 px-4 rounded-lg bg-surface border border-outline-variant text-on-surface hover:bg-surface-container hover:border-outline transition-all flex items-center gap-2 font-label-md text-label-md shadow-sm">
+<span class="material-symbols-outlined text-[18px]">sync</span>
+                        Sync Library
+                    </button>
+<button class="h-10 px-5 rounded-lg bg-primary-container text-on-primary hover:bg-primary transition-all flex items-center gap-2 font-label-md text-label-md shadow-md active:scale-95">
+<span class="material-symbols-outlined text-[18px]">ios_share</span>
+                        Export Price Library
+                    </button>
+</div>
+</section>
+<!-- Library Table Container -->
+<section class="flex-1 flex flex-col bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-outline-variant/30 overflow-hidden relative">
+<!-- Table Controls Bar -->
+<div class="p-4 border-b border-outline-variant/50 flex flex-wrap gap-4 items-center justify-between glass-panel z-10 sticky top-0">
+<div class="flex items-center gap-4">
+<div class="relative w-72">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+<input class="w-full bg-surface border border-outline-variant rounded-md py-1.5 pl-9 pr-3 font-body-sm text-body-sm focus:border-primary focus:ring-1 focus:ring-primary transition-colors" placeholder="Filter items by name or category..." type="text"/>
+</div>
+<div class="h-6 w-px bg-outline-variant/50"></div>
+<button class="flex items-center gap-1.5 text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+                            Filters
+                        </button>
+</div>
+<div class="flex items-center gap-4 font-body-sm text-body-sm text-on-surface-variant">
+<span>Showing 1-10 of 2,450 items</span>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 rounded hover:bg-surface-container flex items-center justify-center text-on-surface-variant disabled:opacity-50"><span class="material-symbols-outlined text-[20px]">chevron_left</span></button>
+<button class="w-8 h-8 rounded hover:bg-surface-container flex items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined text-[20px]">chevron_right</span></button>
+</div>
+</div>
+</div>
+<!-- Data Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse min-w-[1200px]">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant/60 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
+<th class="pl-6 py-4 w-12"><input class="rounded border-outline-variant text-primary focus:ring-primary bg-surface-container-lowest w-4 h-4" type="checkbox"/></th>
+<th class="px-4 py-4 min-w-[200px]">Item Name</th>
+<th class="px-4 py-4 min-w-[140px]">Category</th>
+<th class="px-4 py-4 text-right">Base Price</th>
+<th class="px-4 py-4">Unit</th>
+<th class="px-4 py-4 text-right">Markup %</th>
+<th class="px-4 py-4 text-right font-bold text-on-surface">Final Ref Price</th>
+<th class="px-4 py-4 text-right">Labor Price</th>
+<th class="px-4 py-4">Source</th>
+<th class="px-4 py-4">Saved Date</th>
+<th class="px-4 py-4 text-center">Status</th>
+<th class="pr-6 py-4 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="font-data-tabular text-data-tabular text-on-surface divide-y divide-outline-variant/30">
+<!-- Row 1 -->
+<tr class="h-table-row-height table-row-transition table-row-hover bg-surface-container-lowest">
+<td class="pl-6 py-2"><input class="rounded border-outline-variant text-primary focus:ring-primary bg-surface-container-lowest w-4 h-4" type="checkbox"/></td>
+<td class="px-4 py-2 font-medium text-primary">Structural Steel I-Beam (W12x26)</td>
+<td class="px-4 py-2">
+<span class="inline-flex items-center px-2 py-1 rounded-md bg-secondary-container/50 text-on-secondary-container font-label-md text-[10px] border border-secondary-container/30 uppercase tracking-widest">Materials</span>
+</td>
+<td class="px-4 py-2 text-right">$1,250.00</td>
+<td class="px-4 py-2 text-on-surface-variant">Ton</td>
+<td class="px-4 py-2 text-right text-on-surface-variant">15.0%</td>
+<td class="px-4 py-2 text-right font-bold text-primary-container bg-surface-container-low/50">$1,437.50</td>
+<td class="px-4 py-2 text-right text-on-surface-variant">$250.00</td>
+<td class="px-4 py-2">
+<a class="text-primary hover:underline inline-flex items-center gap-1 font-body-sm text-body-sm" href="#">
+                                        Supplier A
+                                        <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+</a>
+</td>
+<td class="px-4 py-2 text-on-surface-variant font-body-sm text-body-sm">Oct 24, 2023</td>
+<td class="px-4 py-2 text-center">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-fixed/30 text-on-primary-fixed-variant font-label-md text-[11px] uppercase tracking-wide">
+<div class="w-1.5 h-1.5 rounded-full bg-primary-container"></div>
+                                        Verified
+                                    </span>
+</td>
+<td class="pr-6 py-2 text-right">
+<div class="flex items-center justify-end gap-2 opacity-50 hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-on-surface-variant hover:text-primary rounded-md hover:bg-surface-container transition-colors" title="Edit"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-1.5 text-on-surface-variant hover:text-primary rounded-md hover:bg-surface-container transition-colors" title="Duplicate"><span class="material-symbols-outlined text-[18px]">content_copy</span></button>
+<button class="p-1.5 text-on-surface-variant hover:text-error rounded-md hover:bg-error-container transition-colors" title="Remove"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="h-table-row-height table-row-transition table-row-hover bg-surface-container-lowest">
+<td class="pl-6 py-2"><input class="rounded border-outline-variant text-primary focus:ring-primary bg-surface-container-lowest w-4 h-4" type="checkbox"/></td>
+<td class="px-4 py-2 font-medium text-primary">Concrete Ready Mix (35 MPa)</td>
+<td class="px-4 py-2">
+<span class="inline-flex items-center px-2 py-1 rounded-md bg-secondary-container/50 text-on-secondary-container font-label-md text-[10px] border border-secondary-container/30 uppercase tracking-widest">Materials</span>
+</td>
+<td class="px-4 py-2 text-right">$145.00</td>
+<td class="px-4 py-2 text-on-surface-variant">m³</td>
+<td class="px-4 py-2 text-right text-on-surface-variant">12.5%</td>
+<td class="px-4 py-2 text-right font-bold text-primary-container bg-surface-container-low/50">$163.13</td>
+<td class="px-4 py-2 text-right text-on-surface-variant">$45.00</td>
+<td class="px-4 py-2">
+<a class="text-primary hover:underline inline-flex items-center gap-1 font-body-sm text-body-sm" href="#">
+                                        Cemex Global
+                                        <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+</a>
+</td>
+<td class="px-4 py-2 text-on-surface-variant font-body-sm text-body-sm">Oct 23, 2023</td>
+<td class="px-4 py-2 text-center">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-fixed/30 text-on-primary-fixed-variant font-label-md text-[11px] uppercase tracking-wide">
+<div class="w-1.5 h-1.5 rounded-full bg-primary-container"></div>
+                                        Verified
+                                    </span>
+</td>
+<td class="pr-6 py-2 text-right">
+<div class="flex items-center justify-end gap-2 opacity-50 hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-on-surface-variant hover:text-primary rounded-md hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-1.5 text-on-surface-variant hover:text-primary rounded-md hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[18px]">content_copy</span></button>
+<button class="p-1.5 text-on-surface-variant hover:text-error rounded-md hover:bg-error-container transition-colors"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 3 (Pending Status) -->
+<tr class="h-table-row-height table-row-transition table-row-hover bg-surface-container-lowest">
+<td class="pl-6 py-2"><input class="rounded border-outline-variant text-primary focus:ring-primary bg-surface-container-lowest w-4 h-4" type="checkbox"/></td>
+<td class="px-4 py-2 font-medium text-primary">Skilled Electrician Labor</td>
+<td class="px-4 py-2">
+<span class="inline-flex items-center px-2 py-1 rounded-md bg-tertiary-container/10 text-tertiary-container font-label-md text-[10px] border border-tertiary-container/30 uppercase tracking-widest">Labor</span>
+</td>
+<td class="px-4 py-2 text-right">$0.00</td>
+<td class="px-4 py-2 text-on-surface-variant">Hour</td>
+<td class="px-4 py-2 text-right text-on-surface-variant">25.0%</td>
+<td class="px-4 py-2 text-right font-bold text-primary-container bg-surface-container-low/50">$106.25</td>
+<td class="px-4 py-2 text-right text-on-surface-variant">$85.00</td>
+<td class="px-4 py-2">
+<span class="text-on-surface-variant font-body-sm text-body-sm italic">Internal Benchmark</span>
+</td>
+<td class="px-4 py-2 text-on-surface-variant font-body-sm text-body-sm">Oct 20, 2023</td>
+<td class="px-4 py-2 text-center">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-highest text-on-surface-variant font-label-md text-[11px] uppercase tracking-wide">
+<div class="w-1.5 h-1.5 rounded-full bg-on-surface-variant"></div>
+                                        Pending
+                                    </span>
+</td>
+<td class="pr-6 py-2 text-right">
+<div class="flex items-center justify-end gap-2 opacity-50 hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-on-surface-variant hover:text-primary rounded-md hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-1.5 text-on-surface-variant hover:text-primary rounded-md hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[18px]">content_copy</span></button>
+<button class="p-1.5 text-on-surface-variant hover:text-error rounded-md hover:bg-error-container transition-colors"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="h-table-row-height table-row-transition table-row-hover bg-surface-container-lowest">
+<td class="pl-6 py-2"><input class="rounded border-outline-variant text-primary focus:ring-primary bg-surface-container-lowest w-4 h-4" type="checkbox"/></td>
+<td class="px-4 py-2 font-medium text-primary">HVAC Ducting (Galvanized 0.8mm)</td>
+<td class="px-4 py-2">
+<span class="inline-flex items-center px-2 py-1 rounded-md bg-secondary-container/50 text-on-secondary-container font-label-md text-[10px] border border-secondary-container/30 uppercase tracking-widest">MEP</span>
+</td>
+<td class="px-4 py-2 text-right">$42.50</td>
+<td class="px-4 py-2 text-on-surface-variant">m²</td>
+<td class="px-4 py-2 text-right text-on-surface-variant">20.0%</td>
+<td class="px-4 py-2 text-right font-bold text-primary-container bg-surface-container-low/50">$51.00</td>
+<td class="px-4 py-2 text-right text-on-surface-variant">$18.50</td>
+<td class="px-4 py-2">
+<a class="text-primary hover:underline inline-flex items-center gap-1 font-body-sm text-body-sm" href="#">
+                                        AirDuct Systems
+                                        <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+</a>
+</td>
+<td class="px-4 py-2 text-on-surface-variant font-body-sm text-body-sm">Oct 18, 2023</td>
+<td class="px-4 py-2 text-center">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-fixed/30 text-on-primary-fixed-variant font-label-md text-[11px] uppercase tracking-wide">
+<div class="w-1.5 h-1.5 rounded-full bg-primary-container"></div>
+                                        Verified
+                                    </span>
+</td>
+<td class="pr-6 py-2 text-right">
+<div class="flex items-center justify-end gap-2 opacity-50 hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-on-surface-variant hover:text-primary rounded-md hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-1.5 text-on-surface-variant hover:text-primary rounded-md hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[18px]">content_copy</span></button>
+<button class="p-1.5 text-on-surface-variant hover:text-error rounded-md hover:bg-error-container transition-colors"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 5 (Draft/Unverified Status) -->
+<tr class="h-table-row-height table-row-transition table-row-hover bg-surface-container-lowest">
+<td class="pl-6 py-2"><input class="rounded border-outline-variant text-primary focus:ring-primary bg-surface-container-lowest w-4 h-4" type="checkbox"/></td>
+<td class="px-4 py-2 font-medium text-primary">Premium Granite Countertop</td>
+<td class="px-4 py-2">
+<span class="inline-flex items-center px-2 py-1 rounded-md bg-secondary-container/50 text-on-secondary-container font-label-md text-[10px] border border-secondary-container/30 uppercase tracking-widest">Finishes</span>
+</td>
+<td class="px-4 py-2 text-right">$320.00</td>
+<td class="px-4 py-2 text-on-surface-variant">m²</td>
+<td class="px-4 py-2 text-right text-on-surface-variant">18.0%</td>
+<td class="px-4 py-2 text-right font-bold text-primary-container bg-surface-container-low/50">$377.60</td>
+<td class="px-4 py-2 text-right text-on-surface-variant">$65.00</td>
+<td class="px-4 py-2">
+<a class="text-primary hover:underline inline-flex items-center gap-1 font-body-sm text-body-sm" href="#">
+                                        StoneCraft Ltd
+                                        <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+</a>
+</td>
+<td class="px-4 py-2 text-on-surface-variant font-body-sm text-body-sm">Oct 15, 2023</td>
+<td class="px-4 py-2 text-center">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-highest text-on-surface-variant font-label-md text-[11px] uppercase tracking-wide">
+<div class="w-1.5 h-1.5 rounded-full bg-on-surface-variant"></div>
+                                        Draft
+                                    </span>
+</td>
+<td class="pr-6 py-2 text-right">
+<div class="flex items-center justify-end gap-2 opacity-50 hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-on-surface-variant hover:text-primary rounded-md hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-1.5 text-on-surface-variant hover:text-primary rounded-md hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[18px]">content_copy</span></button>
+<button class="p-1.5 text-on-surface-variant hover:text-error rounded-md hover:bg-error-container transition-colors"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+<!-- Footer -->
+<footer class="w-full py-stack-sm bg-background flex justify-between items-center px-gutter mt-auto border-t border-outline-variant flat no shadows">
+<span class="font-label-sm text-label-sm text-on-surface-variant">© 2024 BOQ Intelligence MVP. All rights reserved.</span>
+<div class="flex gap-6">
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary transition-opacity hover:opacity-80" href="#">Terms of Service</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary transition-opacity hover:opacity-80" href="#">Support Center</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary transition-opacity hover:opacity-80" href="#">Privacy Policy</a>
+</div>
+</footer>
+</main>
+</body></html>

@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BOQ Intelligence — Price Finder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600;700&family=Inter:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Emerald Enterprise (Stitch DESIGN.md) */
+  --bg:#f8f9ff; --card:#ffffff; --ink:#0b1c30; --muted:#545f73; --muted2:#6f7973;
+  --line:#e3e8f2; --line-soft:#edf1f8;
+  --primary:#065f46; --primary-deep:#004532; --primary-ink:#0a5c3a;
+  --mint:#a6f2d1; --mint-soft:#e9f8f1; --mint-wash:#f2fbf7;
+  --head-band:#eff4ff; --col-hi:#f3f8f5;
+  --sidebar:#0b4a36; --sidebar-deep:#083a2b; --sidebar-ink:#d7ece2; --sidebar-dim:#8fb8a7;
+  --danger:#ba1a1a; --warn:#946200;
+  --shadow:0 4px 20px rgba(0,0,0,.05);
+  --shadow-lift:0 6px 24px rgba(4,69,50,.10);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:"Inter","Sarabun","Segoe UI",-apple-system,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+h1,h2,h3{font-family:"Hanken Grotesk","Sarabun",sans-serif}
+
+/* ---------- shell ---------- */
+.shell{display:flex;min-height:100vh}
+aside{width:248px;flex:0 0 248px;background:linear-gradient(180deg,var(--sidebar) 0%,var(--sidebar-deep) 100%);
+  color:var(--sidebar-ink);display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.logo{padding:24px 22px 18px;border-bottom:1px solid rgba(255,255,255,.08)}
+.logo h1{font-size:19px;margin:0;font-weight:700;color:#fff;letter-spacing:-.02em}
+.logo .sub{font-size:10.5px;color:var(--sidebar-dim);margin-top:3px;letter-spacing:.14em;font-weight:600}
+nav{padding:16px 12px;display:flex;flex-direction:column;gap:3px}
+nav button{display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:0;background:none;
+  padding:11px 13px;font-size:14px;cursor:pointer;color:var(--sidebar-dim);border-radius:9px;font-family:inherit;font-weight:500}
+nav button svg{flex:0 0 17px;opacity:.85}
+nav button:hover{background:rgba(255,255,255,.07);color:#fff}
+nav button.active{background:rgba(255,255,255,.12);color:#fff;font-weight:600;box-shadow:inset 3px 0 0 var(--mint)}
+nav button .badge{margin-left:auto;background:rgba(166,242,209,.18);color:var(--mint)}
+.sidefoot{margin-top:auto;padding:16px 22px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:var(--sidebar-dim);line-height:1.6}
+
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{background:var(--card);border-bottom:1px solid var(--line);padding:13px 32px;
+  display:flex;align-items:center;justify-content:space-between;gap:14px;position:sticky;top:0;z-index:5}
+.topbar .appname{font-family:"Hanken Grotesk","Sarabun",sans-serif;font-weight:700;font-size:16px;color:var(--primary-deep)}
+.pill{display:inline-flex;align-items:center;gap:7px;background:var(--mint-soft);color:var(--primary-ink);
+  border:1px solid #cdebdc;border-radius:999px;padding:5px 14px;font-size:12px;font-weight:600}
+.pill .dot{width:7px;height:7px;border-radius:50%;background:#12a06b}
+.content{padding:30px 32px 70px;max-width:1280px;width:100%}
+
+.pagehead{margin-bottom:22px}
+.pagehead h2{margin:0;font-size:26px;font-weight:700;letter-spacing:-.02em}
+.pagehead .desc{color:var(--muted);font-size:13.5px;margin-top:6px;max-width:760px;line-height:1.55}
+
+/* ---------- cards / forms ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:var(--shadow)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+label.fieldlabel{display:block;font-size:11px;font-weight:600;letter-spacing:.06em;color:var(--muted);margin:0 0 6px;text-transform:uppercase}
+input[type=text],input[type=number],select{padding:10px 13px;border:1px solid var(--line);border-radius:8px;
+  font-size:14px;font-family:inherit;background:#fbfcff;color:var(--ink)}
+input:focus,select:focus{outline:2px solid rgba(6,95,70,.25);border-color:var(--primary);background:#fff}
+input[type=text]{flex:1;min-width:200px}
+.searchgrid{display:grid;grid-template-columns:1fr 300px;gap:26px}
+.srcpanel{border:1px solid var(--line);border-radius:10px;padding:6px 4px;background:#fbfcff}
+.srcpanel label{display:flex;gap:9px;align-items:center;cursor:pointer;font-size:13.5px;padding:8px 12px;border-radius:7px;color:var(--ink)}
+.srcpanel label:hover{background:var(--mint-wash)}
+.srcpanel input{accent-color:var(--primary)}
+.cardfoot{display:flex;justify-content:flex-end;gap:10px;align-items:center;border-top:1px solid var(--line-soft);margin-top:20px;padding-top:18px}
+
+button.btn{background:var(--primary);color:#fff;border:1px solid var(--primary);border-radius:8px;padding:10px 20px;
+  font-size:14px;cursor:pointer;font-family:inherit;font-weight:600;box-shadow:0 1px 2px rgba(6,95,70,.3)}
+button.btn:hover{background:var(--primary-deep);border-color:var(--primary-deep);box-shadow:var(--shadow-lift)}
+button.btn.outline{background:#fff;color:var(--primary-ink);border:1px solid #b9cfc5;box-shadow:none}
+button.btn.outline:hover{background:var(--mint-wash);border-color:var(--primary)}
+button.btn.ghost{background:none;border:1px solid var(--line);color:var(--muted);box-shadow:none;font-weight:500}
+button.btn.ghost:hover{border-color:var(--danger);color:var(--danger)}
+button.btn.small{padding:6px 14px;font-size:13px}
+button.btn:disabled{opacity:.45;cursor:default}
+a.btnlink{display:inline-block;background:#fff;color:var(--primary-ink);border:1px solid #b9cfc5;
+  border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;text-decoration:none}
+a.btnlink:hover{background:var(--mint-wash);border-color:var(--primary)}
+
+/* ---------- tables ---------- */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px;background:#fff}
+th{background:var(--head-band);text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);
+  white-space:nowrap;font-size:11px;color:var(--muted);letter-spacing:.07em;font-weight:600;text-transform:uppercase}
+td{padding:13px 14px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--mint-wash)}
+td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:500}
+th.chk,td.chk{width:36px;text-align:center;padding-left:12px;padding-right:4px}
+td.final,th.final{background:var(--col-hi)}
+td.final{font-weight:700;color:var(--primary-ink)}
+.srcbadge{display:inline-block;background:var(--head-band);color:#3c475a;border:1px solid #dbe4f5;
+  border-radius:6px;padding:2px 9px;font-size:11.5px;font-weight:600;white-space:nowrap;max-width:190px;overflow:hidden;text-overflow:ellipsis}
+.srcbadge.mint{background:var(--mint-soft);color:var(--primary-ink);border-color:#cdebdc}
+.src{font-size:12px;color:var(--muted)}
+a{color:var(--primary-ink)}
+.badge{display:inline-block;background:var(--mint-soft);color:var(--primary-ink);border-radius:999px;padding:1px 9px;font-size:11.5px;font-weight:700}
+.muted{color:var(--muted)}
+.pill-price{font-weight:600;color:var(--ink);white-space:nowrap}
+.section-h td{background:#f4f7fc;font-weight:600;color:#3c475a;font-size:12.5px;text-transform:none;letter-spacing:.02em}
+.total-row td{background:var(--mint-soft);border-top:2px solid var(--primary);font-size:14px}
+.filled{color:var(--primary-ink);font-weight:700}
+.empty-hint{padding:38px;text-align:center;color:var(--muted)}
+select.libpick{max-width:340px}
+
+/* ---------- misc ---------- */
+.spin{display:inline-block;width:15px;height:15px;border:3px solid #cfe0d6;border-top-color:var(--primary);border-radius:50%;animation:sp .8s linear infinite;vertical-align:middle}
+@keyframes sp{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:24px;right:24px;background:#213145;color:#eaf1ff;padding:13px 21px;border-radius:10px;
+  opacity:0;transition:opacity .3s;pointer-events:none;max-width:420px;z-index:9;font-size:13.5px;box-shadow:var(--shadow-lift)}
+.toast.show{opacity:1}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.toolbar .left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.resultmeta{font-family:"Hanken Grotesk","Sarabun",sans-serif;font-weight:600;font-size:16px}
+.resultmeta .sub{display:block;font-family:"Inter","Sarabun",sans-serif;font-weight:400;font-size:12.5px;color:var(--muted);margin-top:2px}
+
+@media(max-width:960px){
+  .searchgrid{grid-template-columns:1fr}
+}
+@media(max-width:860px){
+  .shell{flex-direction:column}
+  aside{width:100%;flex:none;height:auto;position:static}
+  nav{flex-direction:row;overflow-x:auto}
+  .sidefoot{display:none}
+  nav button{white-space:nowrap}
+  nav button.active{box-shadow:inset 0 -3px 0 var(--mint)}
+  .content{padding:18px 14px 50px}
+  .topbar{padding:12px 14px}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<aside>
+  <div class="logo">
+    <h1>BOQ Intelligence</h1>
+    <div class="sub">PRICE FINDER MVP</div>
+  </div>
+  <nav>
+    <button id="tab-search" class="active" onclick="showTab('search')">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      Price Search</button>
+    <button id="tab-library" onclick="showTab('library')">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5v13z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>
+      Price Library <span id="libcount" class="badge">0</span></button>
+    <button id="tab-boq" onclick="showTab('boq')">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>
+      Fill BOQ</button>
+  </nav>
+  <div class="sidefoot">Sources: sirichaielectric • ranfaifa<br>OBEC 2568 • apelectric + custom URL</div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <span class="appname">BOQ Price Intelligence</span>
+    <span class="pill"><span class="dot"></span> System Online</span>
+  </div>
+  <div class="content">
+
+<!-- ============ TAB 1: SEARCH ============ -->
+<section id="pane-search">
+  <div class="pagehead">
+    <h2>Price Search</h2>
+    <div class="desc">ค้นราคาวัสดุจากเว็บร้านค้าที่เชื่อถือได้ ราคากลางภาครัฐ (สพฐ.2568) และแหล่งที่เพิ่มเอง เพื่อจัดทำ Bill of Quantities อย่างแม่นยำ</div>
+  </div>
+  <div class="card">
+    <div class="searchgrid">
+      <div>
+        <label class="fieldlabel">Search Query</label>
+        <div class="row">
+          <input type="text" id="q" placeholder="เช่น Smoke detector, สายไฟ THW, ท่อ EMT, กล้อง CCTV …"
+                 onkeydown="if(event.key==='Enter')doSearch()">
+        </div>
+        <div style="margin-top:16px">
+          <label class="fieldlabel">Custom Source URL (Optional)</label>
+          <input type="text" id="customUrl" placeholder="https://www.somestore.com — คั่นหลายอันด้วย |" style="width:100%;font-size:13px">
+        </div>
+        <div style="margin-top:16px;max-width:220px">
+          <label class="fieldlabel">Global Markup (%)</label>
+          <input type="number" id="markupDefault" value="10" min="0" step="0.5" style="width:110px"> %
+        </div>
+      </div>
+      <div>
+        <label class="fieldlabel">Target Sources</label>
+        <div class="srcpanel">
+          <label><input type="checkbox" class="src" value="sirichai" checked> sirichaielectric.com</label>
+          <label><input type="checkbox" class="src" value="ranfaifa" checked> ranfaifa.com</label>
+          <label><input type="checkbox" class="src" value="obec" checked> YOTATHAI OBEC 2568</label>
+          <label><input type="checkbox" class="src" value="apelectric" checked> apelectricstore.com</label>
+        </div>
+      </div>
+    </div>
+    <div class="cardfoot">
+      <button class="btn" id="searchBtn" onclick="doSearch()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" style="vertical-align:-2px;margin-right:6px"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Execute Search</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="toolbar">
+      <div class="left"><div id="searchStatus" class="muted">Search Results — ยังไม่ได้ค้นหา</div></div>
+      <button class="btn" id="saveSelBtn" style="display:none" onclick="saveSelected()">Save Selected → Library</button>
+    </div>
+    <div class="tablewrap" id="resultWrap" style="display:none">
+    <table id="resultTbl">
+      <thead><tr>
+        <th class="chk"><input type="checkbox" id="chkAll" onchange="toggleAll(this)"></th>
+        <th>Item Name</th><th class="num">Base Price (THB)</th><th>Unit</th>
+        <th class="num">Labor</th><th>Source</th><th>Retrieved</th>
+        <th class="num">Markup %</th><th class="num final">Final Price</th><th></th>
+      </tr></thead>
+      <tbody id="resultBody"></tbody>
+    </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TAB 2: LIBRARY ============ -->
+<section id="pane-library" style="display:none">
+  <div class="pagehead">
+    <h2>Price Library</h2>
+    <div class="desc">คลังราคากลางที่เลือกใช้จริง — ปรับ markup / ปริมาณเพื่อดูยอดรวม แล้ว Export เป็น Excel เพื่อใช้อ้างอิง</div>
+  </div>
+  <div class="card">
+    <div class="toolbar">
+      <div class="left"><span class="resultmeta"><span id="libTotalCount">0</span> Items<span class="sub">รายการทั้งหมดใน Library</span></span></div>
+      <button class="btn" onclick="location='/api/library/export'">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>Export Price Library</button>
+    </div>
+    <div class="tablewrap">
+    <table>
+      <thead><tr>
+        <th>#</th><th>Item Name</th><th class="num">Base Price</th><th class="num">Markup %</th>
+        <th class="num final">Final Ref Price</th><th>Unit</th><th class="num">Qty</th>
+        <th class="num final">Total (THB)</th><th class="num">Labor</th>
+        <th>Source</th><th>Saved</th><th></th>
+      </tr></thead>
+      <tbody id="libBody"><tr><td colspan="12" class="empty-hint">ยังไม่มีรายการ — ไปที่เมนู “Price Search” แล้ว Save เข้ามา</td></tr></tbody>
+    </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TAB 3: BOQ ============ -->
+<section id="pane-boq" style="display:none">
+  <div class="pagehead">
+    <h2>Fill BOQ</h2>
+    <div class="desc">จับคู่ราคาจาก Price Library เข้ากับรายการใน BOQ แล้วเติมค่าวัสดุ (คอลัมน์ E) และค่าแรง (คอลัมน์ G) โดยรักษาสูตรและ format ของไฟล์เดิม</div>
+  </div>
+  <div class="card">
+    <div class="row">
+      <div style="flex:1;min-width:260px">
+        <label class="fieldlabel">BOQ File</label>
+        <select id="boqFile" onchange="loadBoq()" style="width:100%"></select>
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-end;padding-top:18px">
+        <button class="btn outline" onclick="loadBoq()">Reload</button>
+        <button class="btn outline" onclick="autoMatch()">✦ Auto Match from Library</button>
+        <button class="btn" onclick="fillBoq()">Fill BOQ</button>
+      </div>
+    </div>
+    <div class="muted" style="margin-top:12px;font-size:12.5px">
+      ระบบบันทึกเป็นไฟล์ใหม่ “(filled วันที่)” — ไฟล์ต้นฉบับไม่ถูกแก้ สูตรรวมเงินเดิมคำนวณต่อให้เอง
+    </div>
+  </div>
+  <div class="card">
+    <div class="toolbar"><div class="left"><div id="boqStatus" class="muted">BOQ Mapping Review — ยังไม่ได้โหลด</div></div></div>
+    <div class="tablewrap" id="boqWrap" style="display:none">
+    <table id="boqTbl">
+      <thead><tr>
+        <th>Row</th><th>BOQ Item Description</th><th class="num">Qty</th><th>Unit</th>
+        <th>Selected Library Item</th><th class="num final">Mat. Price/Unit</th><th class="num final">Lab. Price/Unit</th>
+      </tr></thead>
+      <tbody id="boqBody"></tbody>
+    </table>
+    </div>
+  </div>
+</section>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /shell -->
+<div class="toast" id="toast"></div>
+
+<script>
+let lib = [];
+let boqItems = [];
+let boqFileName = '';
+let lastResults = [];
+
+const fmt = n => n==null || n==='' ? '—' : Number(n).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2600);
+}
+function showTab(name){
+  for(const k of ['search','library','boq']){
+    document.getElementById('pane-'+k).style.display = k===name?'':'none';
+    document.getElementById('tab-'+k).classList.toggle('active', k===name);
+  }
+  if(name==='library') renderLib();
+  if(name==='boq' && !boqItems.length) initBoqTab();
+}
+
+/* ---------------- search ---------------- */
+async function doSearch(){
+  const q = document.getElementById('q').value.trim();
+  if(!q) return;
+  const srcs = [...document.querySelectorAll('.src:checked')].map(c=>c.value).join(',');
+  const custom = document.getElementById('customUrl').value.trim();
+  const st = document.getElementById('searchStatus');
+  st.innerHTML = '<span class="spin"></span> กำลังค้นหา “'+esc(q)+'” จากทุกแหล่ง…';
+  document.getElementById('searchBtn').disabled = true;
+  try{
+    const r = await fetch('/api/search?q='+encodeURIComponent(q)+'&sources='+srcs+'&custom='+encodeURIComponent(custom));
+    const d = await r.json();
+    renderResults(d, q);
+  }catch(e){ st.textContent = 'ผิดพลาด: '+e; }
+  document.getElementById('searchBtn').disabled = false;
+}
+
+function renderResults(d, q){
+  const st = document.getElementById('searchStatus');
+  const wrap = document.getElementById('resultWrap');
+  const body = document.getElementById('resultBody');
+  const mk = parseFloat(document.getElementById('markupDefault').value)||0;
+  lastResults = d.results;
+  body.innerHTML = '';
+  document.getElementById('chkAll').checked = false;
+  let msg = '<span class="resultmeta">Search Results<span class="sub">Found '+d.results.length+' matches สำหรับ “'+esc(q)+'”</span></span>';
+  if(d.errors.length) msg += ' <span style="color:var(--warn);font-size:12px">(บางแหล่งดึงไม่สำเร็จ: '+esc(d.errors.join('; '))+')</span>';
+  st.innerHTML = msg;
+  wrap.style.display = d.results.length? '' : 'none';
+  document.getElementById('saveSelBtn').style.display = d.results.length? '' : 'none';
+  d.results.forEach((it,i)=>{
+    const tr = document.createElement('tr');
+    const after = it.price!=null ? it.price*(1+mk/100) : null;
+    tr.innerHTML =
+      '<td class="chk"><input type="checkbox" class="cand-chk" data-i="'+i+'"></td>'+
+      '<td>'+esc(it.name)+'</td>'+
+      '<td class="num pill-price">'+fmt(it.price)+'</td>'+
+      '<td>'+esc(it.unit||'—')+'</td>'+
+      '<td class="num">'+fmt(it.labor)+'</td>'+
+      '<td><span class="srcbadge">'+esc(it.source)+'</span><br><a class="src" href="'+esc(it.url)+'" target="_blank">เปิดดู ↗</a></td>'+
+      '<td class="src">'+esc(it.fetched_at)+'</td>'+
+      '<td class="num"><input type="number" value="'+mk+'" min="0" step="0.5" style="width:70px" '+
+        'oninput="updAfter(this,'+(it.price==null?'null':it.price)+','+i+')"></td>'+
+      '<td class="num final" id="after-'+i+'">'+fmt(after)+'</td>'+
+      '<td><button class="btn small outline" onclick="saveToLib('+i+', this)">Save</button></td>';
+    body.appendChild(tr);
+  });
+}
+function updAfter(inp, price, i){
+  const mk = parseFloat(inp.value)||0;
+  document.getElementById('after-'+i).textContent =
+    price==null?'—':fmt(price*(1+mk/100));
+}
+function toggleAll(chk){
+  document.querySelectorAll('.cand-chk').forEach(c=>{ c.checked = chk.checked; });
+}
+async function saveToLib(i, btn){
+  const it = lastResults[i];
+  const tr = btn.closest('tr');
+  const mk = parseFloat(tr.querySelector('input[type=number]').value)||0;
+  const rec = {
+    name: it.name, price: it.price, unit: it.unit||'', labor: it.labor??null,
+    source: it.source, url: it.url, fetched_at: it.fetched_at,
+    markup_pct: mk, qty: 1,
+    final_price: it.price!=null ? +(it.price*(1+mk/100)).toFixed(2) : null,
+  };
+  const r = await fetch('/api/library', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(rec)});
+  await r.json();
+  await refreshLib();
+  btn.textContent = '✓ Saved'; btn.disabled = true;
+  return it;
+}
+async function saveSelected(){
+  const chks = [...document.querySelectorAll('.cand-chk:checked')];
+  if(!chks.length){ toast('ติ๊กเลือกรายการก่อน (ช่องหน้าชื่อสินค้า)'); return; }
+  let n = 0;
+  for(const c of chks){
+    const i = +c.dataset.i;
+    const btn = c.closest('tr').querySelector('button');
+    if(btn.disabled) continue;
+    await saveToLib(i, btn);
+    n++;
+  }
+  toast('บันทึกเข้า Price Library แล้ว '+n+' รายการ');
+}
+
+/* ---------------- library ---------------- */
+async function refreshLib(){
+  lib = await (await fetch('/api/library')).json();
+  document.getElementById('libcount').textContent = lib.length;
+  document.getElementById('libTotalCount').textContent = lib.length;
+}
+const libTotal = it => it.final_price!=null ? +(it.final_price*(it.qty??1)).toFixed(2) : null;
+function renderLib(){
+  const body = document.getElementById('libBody');
+  if(!lib.length){
+    body.innerHTML = '<tr><td colspan="12" class="empty-hint">ยังไม่มีรายการ — ไปที่เมนู “Price Search” แล้ว Save เข้ามา</td></tr>';
+    return;
+  }
+  body.innerHTML = '';
+  let grand = 0;
+  lib.forEach((it,n)=>{
+    grand += libTotal(it)||0;
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td class="src">'+(n+1)+'</td><td>'+esc(it.name)+'</td>'+
+      '<td class="num">'+fmt(it.price)+'</td>'+
+      '<td class="num"><input type="number" value="'+(it.markup_pct??0)+'" style="width:65px" min="0" step="0.5" '+
+        'onchange="updLib('+it.id+', this.value)"></td>'+
+      '<td class="num final" id="fp-'+it.id+'">'+fmt(it.final_price)+'</td>'+
+      '<td>'+esc(it.unit||'—')+'</td>'+
+      '<td class="num"><input type="number" value="'+(it.qty??1)+'" style="width:70px" min="0" step="1" '+
+        'onchange="updQty('+it.id+', this.value)"></td>'+
+      '<td class="num final" id="tt-'+it.id+'">'+fmt(libTotal(it))+'</td>'+
+      '<td class="num">'+fmt(it.labor)+'</td>'+
+      '<td><span class="srcbadge mint">'+esc(it.source)+'</span>'+(it.url?'<br><a class="src" href="'+esc(it.url)+'" target="_blank">↗</a>':'')+'</td>'+
+      '<td class="src">'+esc(it.fetched_at||'')+'</td>'+
+      '<td><button class="btn small ghost" onclick="delLib('+it.id+')">ลบ</button></td>';
+    body.appendChild(tr);
+  });
+  const trf = document.createElement('tr');
+  trf.className = 'total-row';
+  trf.innerHTML = '<td colspan="7" style="text-align:right"><b>รวมทั้งหมด (Total)</b></td>'+
+    '<td class="num final" id="grandTotal"><b>'+fmt(grand)+'</b></td><td colspan="4"></td>';
+  body.appendChild(trf);
+}
+function refreshTotals(it){
+  document.getElementById('fp-'+it.id).textContent = fmt(it.final_price);
+  document.getElementById('tt-'+it.id).textContent = fmt(libTotal(it));
+  document.getElementById('grandTotal').innerHTML =
+    '<b>'+fmt(lib.reduce((s,x)=>s+(libTotal(x)||0),0))+'</b>';
+}
+async function updLib(id, mkVal){
+  const it = lib.find(x=>x.id===id); if(!it) return;
+  const mk = parseFloat(mkVal)||0;
+  it.markup_pct = mk;
+  it.final_price = it.price!=null ? +(it.price*(1+mk/100)).toFixed(2) : null;
+  refreshTotals(it);
+  await fetch('/api/library/update', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({id:id, markup_pct:mk, final_price:it.final_price})});
+}
+async function updQty(id, qVal){
+  const it = lib.find(x=>x.id===id); if(!it) return;
+  it.qty = Math.max(0, parseFloat(qVal)||0);
+  refreshTotals(it);
+  await fetch('/api/library/update', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({id:id, qty:it.qty})});
+}
+async function delLib(id){
+  await fetch('/api/library?id='+id, {method:'DELETE'});
+  await refreshLib(); renderLib();
+}
+
+/* ---------------- BOQ ---------------- */
+async function initBoqTab(){
+  const files = await (await fetch('/api/boq/files')).json();
+  const sel = document.getElementById('boqFile');
+  sel.innerHTML = files.map(f=>'<option>'+esc(f)+'</option>').join('');
+  if(files.length) loadBoq();
+}
+async function loadBoq(){
+  const f = document.getElementById('boqFile').value;
+  if(!f) return;
+  const st = document.getElementById('boqStatus');
+  st.innerHTML = '<span class="spin"></span> กำลังอ่านไฟล์…';
+  const d = await (await fetch('/api/boq/items?file='+encodeURIComponent(f))).json();
+  if(d.error){ st.textContent = d.error; return; }
+  boqItems = d.items; boqFileName = d.file;
+  st.innerHTML = '<span class="resultmeta">BOQ Mapping Review<span class="sub">ชีท “'+esc(d.sheet)+'” — '+d.items.length+' รายการที่มีปริมาณ+หน่วย</span></span>';
+  renderBoq();
+}
+function libOptions(){
+  let o = '<option value="">— ไม่เติม —</option>';
+  lib.forEach(it=>{
+    o += '<option value="'+it.id+'">'+esc(it.name.slice(0,60))+' | '+fmt(it.final_price??it.price)+' บ.'+
+         (it.labor!=null?' (+แรง '+fmt(it.labor)+')':'')+'</option>';
+  });
+  return o;
+}
+function renderBoq(){
+  const wrap = document.getElementById('boqWrap');
+  const body = document.getElementById('boqBody');
+  body.innerHTML = ''; wrap.style.display = boqItems.length?'':'none';
+  let lastSection = null;
+  boqItems.forEach((it,i)=>{
+    if(it.section !== lastSection){
+      lastSection = it.section;
+      const trh = document.createElement('tr');
+      trh.className = 'section-h';
+      trh.innerHTML = '<td colspan="7">'+esc(it.section||'')+'</td>';
+      body.appendChild(trh);
+    }
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td class="src">'+it.row+'</td>'+
+      '<td>'+esc(it.name)+'</td>'+
+      '<td class="num">'+it.qty+'</td><td>'+esc(it.unit)+'</td>'+
+      '<td><select class="libpick" id="pick-'+i+'" onchange="pickLib('+i+')">'+libOptions()+'</select></td>'+
+      '<td class="num final" id="mat-'+i+'">'+fmt(it.material)+'</td>'+
+      '<td class="num final" id="lab-'+i+'">'+fmt(it.labor)+'</td>';
+    body.appendChild(tr);
+  });
+}
+function pickLib(i){
+  const sel = document.getElementById('pick-'+i);
+  const it = lib.find(x=>x.id===+sel.value);
+  boqItems[i].fill_material = it ? (it.final_price??it.price) : null;
+  boqItems[i].fill_labor = it && it.labor!=null ? it.labor : null;
+  document.getElementById('mat-'+i).innerHTML = it? '<span class="filled">'+fmt(boqItems[i].fill_material)+'</span>' : fmt(boqItems[i].material);
+  document.getElementById('lab-'+i).innerHTML = it && it.labor!=null? '<span class="filled">'+fmt(it.labor)+'</span>' : fmt(boqItems[i].labor);
+}
+const normTxt = s => (s||'').toLowerCase().replace(/[^a-z0-9ก-๙]/g,'');
+function autoMatch(){
+  if(!lib.length){ toast('Library ยังว่าง — Save ราคาก่อน'); return; }
+  let n = 0;
+  boqItems.forEach((it,i)=>{
+    const bn = normTxt(it.name);
+    if(!bn) return;
+    let best = null, bestScore = 0;
+    lib.forEach(L=>{
+      const ln = normTxt(L.name);
+      let score = 0;
+      if(ln.includes(bn) || bn.includes(ln)) score = Math.min(bn.length, ln.length);
+      else {
+        const words = it.name.toLowerCase().split(/\s+/).filter(w=>w.length>2);
+        const hit = words.filter(w=>ln.includes(normTxt(w))).length;
+        if(words.length && hit/words.length >= 0.6) score = hit;
+      }
+      if(score > bestScore){ bestScore = score; best = L; }
+    });
+    if(best){
+      document.getElementById('pick-'+i).value = best.id;
+      pickLib(i); n++;
+    }
+  });
+  toast('จับคู่อัตโนมัติได้ '+n+' รายการ — ตรวจสอบก่อนกด Fill BOQ');
+}
+async function fillBoq(){
+  const assigns = boqItems
+    .map(it=>({row:it.row, material:it.fill_material??null, labor:it.fill_labor??null}))
+    .filter(a=>a.material!=null || a.labor!=null);
+  if(!assigns.length){ toast('ยังไม่ได้เลือกราคาให้รายการใดเลย'); return; }
+  const r = await fetch('/api/boq/fill', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({file:boqFileName, assignments:assigns})});
+  const d = await r.json();
+  if(d.ok){
+    toast('เติมราคา '+d.filled+' รายการ → '+d.output);
+    document.getElementById('boqStatus').innerHTML =
+      'บันทึกแล้ว: <b>'+esc(d.output)+'</b> &nbsp; <a class="btnlink" href="/api/boq/download?file='+encodeURIComponent(d.output)+'">⬇ Download Filled BOQ</a>';
+  } else toast('ผิดพลาด');
+}
+
+refreshLib();
+</script>
+</body>
+</html>

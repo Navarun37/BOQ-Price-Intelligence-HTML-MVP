@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dashboard - BOQ Price Intelligence</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Hanken+Grotesk:wght@600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container": "#e5eeff",
+                        "primary-container": "#065f46",
+                        "on-primary": "#ffffff",
+                        "primary-fixed-dim": "#8bd6b6",
+                        "on-tertiary-fixed": "#131e19",
+                        "secondary-container": "#d5e0f8",
+                        "on-background": "#0b1c30",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "outline": "#6f7973",
+                        "tertiary-fixed": "#d9e6dd",
+                        "tertiary-fixed-dim": "#bdcac1",
+                        "primary": "#004532",
+                        "on-primary-fixed-variant": "#00513b",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "error": "#ba1a1a",
+                        "secondary": "#545f73",
+                        "on-secondary-container": "#586377",
+                        "on-error-container": "#93000a",
+                        "surface-container-highest": "#d3e4fe",
+                        "on-secondary-fixed": "#111c2d",
+                        "surface-tint": "#1b6b51",
+                        "background": "#f8f9ff",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#dce9ff",
+                        "outline-variant": "#bec9c2",
+                        "on-primary-fixed": "#002116",
+                        "on-tertiary-container": "#becac2",
+                        "primary-fixed": "#a6f2d1",
+                        "surface-dim": "#cbdbf5",
+                        "tertiary": "#333f39",
+                        "surface-bright": "#f8f9ff",
+                        "tertiary-container": "#4a564f",
+                        "inverse-primary": "#8bd6b6",
+                        "on-surface": "#0b1c30",
+                        "on-primary-container": "#8bd6b7",
+                        "secondary-fixed": "#d8e3fb",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-error": "#ffffff",
+                        "surface-container-low": "#eff4ff",
+                        "inverse-surface": "#213145",
+                        "on-surface-variant": "#3f4944",
+                        "surface": "#f8f9ff",
+                        "surface-variant": "#d3e4fe",
+                        "on-tertiary-fixed-variant": "#3e4943",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "on-secondary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-padding": "32px",
+                        "section-gap": "48px",
+                        "base": "8px",
+                        "gutter": "24px",
+                        "table-row-height": "56px"
+                    },
+                    "fontFamily": {
+                        "data-tabular": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display-lg": ["Hanken Grotesk"],
+                        "title-lg": ["Inter"],
+                        "headline-sm": ["Hanken Grotesk"],
+                        "headline-md": ["Hanken Grotesk"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "data-tabular": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "title-lg": ["18px", { "lineHeight": "26px", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .ambient-shadow { box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.04); }
+        .hover-lift:hover { box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.08); transform: translateY(-2px); border-color: rgba(0, 69, 50, 0.1); }
+        .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 300ms; }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md h-screen flex overflow-hidden">
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col h-full py-stack-md bg-primary-container dark:bg-primary-container font-body-md text-body-md fixed left-0 top-0 h-screen w-64 border-r border-outline-variant dark:border-primary-container z-50">
+<div class="px-gutter pb-section-gap pt-6 flex flex-col items-center">
+<div class="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mb-4 overflow-hidden shadow-sm">
+<span class="material-symbols-outlined text-3xl text-primary" data-icon="apartment">apartment</span>
+</div>
+<div class="font-headline-sm text-headline-sm font-bold text-on-primary dark:text-primary-fixed text-center tracking-tight">BOQ Intelligence</div>
+<div class="font-label-md text-label-md text-on-primary-container mt-1 uppercase opacity-80">Elite Procurement MVP</div>
+</div>
+<div class="flex-1 flex flex-col gap-2 px-2 overflow-y-auto w-full">
+<a class="flex items-center gap-3 bg-secondary-container/20 text-on-secondary-container border-l-4 border-secondary-container px-4 py-3 rounded-r-lg group hover:bg-primary/50 transition-colors duration-200 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 text-on-primary-container/70 hover:text-on-primary-container px-4 py-3 border-l-4 border-transparent hover:bg-primary/50 transition-colors duration-200 active:scale-95 transition-transform rounded-r-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+<span>Price Search</span>
+</a>
+<a class="flex items-center gap-3 text-on-primary-container/70 hover:text-on-primary-container px-4 py-3 border-l-4 border-transparent hover:bg-primary/50 transition-colors duration-200 active:scale-95 transition-transform rounded-r-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span>Candidate List</span>
+</a>
+<a class="flex items-center gap-3 text-on-primary-container/70 hover:text-on-primary-container px-4 py-3 border-l-4 border-transparent hover:bg-primary/50 transition-colors duration-200 active:scale-95 transition-transform rounded-r-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="library_books">library_books</span>
+<span>Price Library</span>
+</a>
+<a class="flex items-center gap-3 text-on-primary-container/70 hover:text-on-primary-container px-4 py-3 border-l-4 border-transparent hover:bg-primary/50 transition-colors duration-200 active:scale-95 transition-transform rounded-r-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="edit_note">edit_note</span>
+<span>Fill BOQ</span>
+</a>
+<a class="flex items-center gap-3 text-on-primary-container/70 hover:text-on-primary-container px-4 py-3 border-l-4 border-transparent hover:bg-primary/50 transition-colors duration-200 active:scale-95 transition-transform rounded-r-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="ios_share">ios_share</span>
+<span>Export Center</span>
+</a>
+<a class="flex items-center gap-3 text-on-primary-container/70 hover:text-on-primary-container px-4 py-3 border-l-4 border-transparent hover:bg-primary/50 transition-colors duration-200 active:scale-95 transition-transform rounded-r-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="database">database</span>
+<span>Source Management</span>
+</a>
+<a class="flex items-center gap-3 text-on-primary-container/70 hover:text-on-primary-container px-4 py-3 border-l-4 border-transparent hover:bg-primary/50 transition-colors duration-200 active:scale-95 transition-transform rounded-r-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span>Activity Log</span>
+</a>
+</div>
+<div class="mt-auto pt-6 px-2 w-full">
+<a class="flex items-center gap-3 text-on-primary-container/70 hover:text-on-primary-container px-4 py-3 border-l-4 border-transparent hover:bg-primary/50 transition-colors duration-200 active:scale-95 transition-transform rounded-r-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<div class="flex-1 flex flex-col md:ml-64 w-full h-full relative overflow-hidden bg-background">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center h-16 px-gutter w-full sticky top-0 z-40 bg-surface/80 backdrop-blur-md shadow-sm dark:shadow-none bg-surface dark:bg-inverse-surface border-b border-outline-variant dark:border-outline font-label-md text-label-md">
+<div class="flex items-center gap-4">
+<button class="md:hidden text-primary focus:outline-none p-2 rounded hover:bg-surface-variant">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="font-headline-md text-headline-md font-black text-primary tracking-tight">BOQ Price Intelligence</div>
+</div>
+<div class="flex-1 max-w-md mx-8 hidden lg:flex items-center relative focus-within:ring-2 focus-within:ring-secondary-container rounded-lg">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg font-body-sm text-body-sm focus:outline-none focus:border-primary focus:ring-0 transition-colors text-on-surface placeholder-on-surface-variant/50" placeholder="Search pricing or candidates..." type="text"/>
+</div>
+<div class="flex items-center gap-6 text-primary dark:text-primary-fixed">
+<div class="hidden md:flex items-center gap-2 px-3 py-1 bg-surface-container-low rounded-full border border-outline-variant">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span class="font-label-md text-on-surface-variant">System Healthy</span>
+</div>
+<button class="hover:text-secondary transition-colors relative">
+<span class="material-symbols-outlined" data-icon="sync">sync</span>
+</button>
+<button class="hover:text-secondary transition-colors relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full ring-2 ring-surface"></span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-variant border border-outline-variant overflow-hidden cursor-pointer">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="A professional corporate headshot of an executive in a well-lit, modern office setting with a bright, minimalist background. The lighting is soft and neutral." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_48BFY09pc-TkPzJXnyiaWUbZpOlTXma5vubehyEqr7hCWlYPKG7UgVwQBdxWixJm0Gd5AAj9XCUqmamwQy3L44n4PCIBrutMcvvYClTL2qhiDODmDIM-pGSee20y2p5kKLZtFTk7jugi-p2xfQRGls9o7eg09-iIWzHYqa2WZCdU3YjrXqAGvadscS2Qoj_Vn1kGJIUccexgDYjgZphrRnzTO-piTnJH5RF3v3gtsiBS0OBuB1WUyvmVtnfRBkXEwhF8RuN8TSc"/>
+</div>
+</div>
+</header>
+<!-- Scrollable Content Area -->
+<main class="flex-1 overflow-y-auto px-4 md:px-container-padding py-8 scroll-smooth">
+<div class="max-w-[1440px] mx-auto space-y-section-gap">
+<!-- Welcome & Actions Banner -->
+<div class="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 bg-surface-container-lowest p-6 rounded-xl ambient-shadow border border-outline-variant/30">
+<div>
+<h1 class="font-display-lg text-display-lg text-on-surface mb-2">Good morning, Director.</h1>
+<p class="font-body-md text-on-surface-variant">Here is the latest intelligence on your procurement operations.</p>
+</div>
+<div class="flex flex-wrap gap-3">
+<button class="px-5 py-2.5 bg-primary text-on-primary font-label-md text-label-md rounded-lg shadow-sm hover:bg-primary/90 transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="search">search</span> Price Search
+                        </button>
+<button class="px-5 py-2.5 bg-surface-container-lowest border border-outline text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-variant transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="upload_file">upload_file</span> Upload BOQ
+                        </button>
+</div>
+</div>
+<!-- KPI Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-6 ambient-shadow border border-outline-variant/30 hover-lift transition-all flex flex-col justify-between h-40">
+<div class="flex justify-between items-start">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Total Candidates</span>
+<span class="material-symbols-outlined text-secondary" data-icon="groups">groups</span>
+</div>
+<div>
+<div class="font-display-lg text-display-lg text-on-surface">1,248</div>
+<div class="flex items-center gap-1 mt-1 text-primary-container font-label-md">
+<span class="material-symbols-outlined text-[16px]" data-icon="trending_up">trending_up</span>
+<span>+12% this month</span>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-6 ambient-shadow border border-outline-variant/30 hover-lift transition-all flex flex-col justify-between h-40">
+<div class="flex justify-between items-start">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Saved Library Items</span>
+<span class="material-symbols-outlined text-secondary" data-icon="bookmark">bookmark</span>
+</div>
+<div>
+<div class="font-display-lg text-display-lg text-on-surface">432</div>
+<div class="flex items-center gap-1 mt-1 text-primary-container font-label-md">
+<span class="material-symbols-outlined text-[16px]" data-icon="trending_up">trending_up</span>
+<span>+4% this week</span>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest rounded-xl p-6 ambient-shadow border border-outline-variant/30 hover-lift transition-all flex flex-col justify-between h-40">
+<div class="flex justify-between items-start">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">BOQ Files Processed</span>
+<span class="material-symbols-outlined text-secondary" data-icon="description">description</span>
+</div>
+<div>
+<div class="font-display-lg text-display-lg text-on-surface">89</div>
+<div class="flex items-center gap-1 mt-1 text-on-surface-variant font-label-md">
+<span>YTD Total</span>
+</div>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-surface-container-lowest rounded-xl p-6 ambient-shadow border border-outline-variant/30 hover-lift transition-all flex flex-col justify-between h-40">
+<div class="flex justify-between items-start">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Active Sources</span>
+<span class="material-symbols-outlined text-secondary" data-icon="cell_tower">cell_tower</span>
+</div>
+<div>
+<div class="font-display-lg text-display-lg text-on-surface">24</div>
+<div class="flex items-center gap-1 mt-1 text-on-surface-variant font-label-md truncate">
+<span>Latest Export: 'Terminal A'</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Content Row -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Activity Table -->
+<div class="lg:col-span-2 bg-surface-container-lowest rounded-xl ambient-shadow border border-outline-variant/30 overflow-hidden flex flex-col">
+<div class="p-6 border-b border-outline-variant/50 flex justify-between items-center bg-surface-container-low/50">
+<h2 class="font-title-lg text-title-lg text-on-surface">Recent Intelligence Updates</h2>
+<button class="text-primary hover:text-primary-container font-label-md transition-colors">View All</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-lowest border-b border-outline-variant/50">
+<tr>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase tracking-wider font-semibold">Activity</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase tracking-wider font-semibold">Entity</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase tracking-wider font-semibold">Status</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase tracking-wider font-semibold text-right">Time</th>
+</tr>
+</thead>
+<tbody class="font-data-tabular text-data-tabular text-on-surface">
+<tr class="border-b border-outline-variant/20 hover:bg-surface-container-low transition-colors h-[56px]">
+<td class="px-6 py-2 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[16px]" data-icon="upload">upload</span>
+</div>
+                                            BOQ Uploaded
+                                        </td>
+<td class="px-6 py-2 text-on-surface-variant">Project_Alpha_Q3.xlsx</td>
+<td class="px-6 py-2">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-surface-container text-on-surface-variant">
+                                                Processing
+                                            </span>
+</td>
+<td class="px-6 py-2 text-right text-on-surface-variant">10 mins ago</td>
+</tr>
+<tr class="border-b border-outline-variant/20 hover:bg-surface-container-low transition-colors h-[56px]">
+<td class="px-6 py-2 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-[16px]" data-icon="search_check">search_check</span>
+</div>
+                                            Price Search Completed
+                                        </td>
+<td class="px-6 py-2 text-on-surface-variant">Structural Steel - Grade 350</td>
+<td class="px-6 py-2">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-fixed text-on-primary-fixed">
+                                                Found
+                                            </span>
+</td>
+<td class="px-6 py-2 text-right text-on-surface-variant">1 hr ago</td>
+</tr>
+<tr class="border-b border-outline-variant/20 hover:bg-surface-container-low transition-colors h-[56px]">
+<td class="px-6 py-2 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[16px]" data-icon="person_add">person_add</span>
+</div>
+                                            Candidate Added
+                                        </td>
+<td class="px-6 py-2 text-on-surface-variant">Acme Supplies Ltd.</td>
+<td class="px-6 py-2">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-surface-container text-on-surface-variant">
+                                                Pending Review
+                                            </span>
+</td>
+<td class="px-6 py-2 text-right text-on-surface-variant">3 hrs ago</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors h-[56px]">
+<td class="px-6 py-2 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-[16px]" data-icon="download">download</span>
+</div>
+                                            Export Generated
+                                        </td>
+<td class="px-6 py-2 text-on-surface-variant">Terminal A Expansion - Final</td>
+<td class="px-6 py-2">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-fixed text-on-primary-fixed">
+                                                Ready
+                                            </span>
+</td>
+<td class="px-6 py-2 text-right text-on-surface-variant">Yesterday</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Quick Actions Bento -->
+<div class="lg:col-span-1 flex flex-col gap-6">
+<div class="bg-surface-container-lowest rounded-xl p-6 ambient-shadow border border-outline-variant/30 flex-1 flex flex-col">
+<h3 class="font-title-lg text-title-lg text-on-surface mb-4">Quick Operations</h3>
+<div class="grid grid-cols-2 gap-4 flex-1">
+<button class="bg-surface rounded-lg p-4 border border-outline-variant/50 hover:border-primary/30 hover:bg-surface-container-low transition-all flex flex-col items-center justify-center text-center gap-2 group">
+<span class="material-symbols-outlined text-3xl text-secondary group-hover:text-primary transition-colors" data-icon="search">search</span>
+<span class="font-label-md text-on-surface">Price Search</span>
+</button>
+<button class="bg-surface rounded-lg p-4 border border-outline-variant/50 hover:border-primary/30 hover:bg-surface-container-low transition-all flex flex-col items-center justify-center text-center gap-2 group">
+<span class="material-symbols-outlined text-3xl text-secondary group-hover:text-primary transition-colors" data-icon="library_books">library_books</span>
+<span class="font-label-md text-on-surface">Price Library</span>
+</button>
+<button class="bg-surface rounded-lg p-4 border border-outline-variant/50 hover:border-primary/30 hover:bg-surface-container-low transition-all flex flex-col items-center justify-center text-center gap-2 group">
+<span class="material-symbols-outlined text-3xl text-secondary group-hover:text-primary transition-colors" data-icon="cloud_upload">cloud_upload</span>
+<span class="font-label-md text-on-surface">Upload BOQ</span>
+</button>
+<button class="bg-surface rounded-lg p-4 border border-outline-variant/50 hover:border-primary/30 hover:bg-surface-container-low transition-all flex flex-col items-center justify-center text-center gap-2 group">
+<span class="material-symbols-outlined text-3xl text-secondary group-hover:text-primary transition-colors" data-icon="folder_open">folder_open</span>
+<span class="font-label-md text-on-surface">View Exports</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<footer class="w-full py-stack-sm bg-background dark:bg-background border-t border-outline-variant flex justify-between items-center px-gutter mt-12 font-label-sm text-label-sm text-on-surface-variant dark:text-on-surface-variant transition-opacity hover:opacity-80">
+<div>© 2024 BOQ Intelligence MVP. All rights reserved.</div>
+<div class="flex gap-4">
+<a class="hover:text-secondary" href="#">Terms of Service</a>
+<a class="hover:text-secondary" href="#">Support Center</a>
+<a class="hover:text-secondary" href="#">Privacy Policy</a>
+</div>
+</footer>
+</main>
+</div>
+</body></html>
